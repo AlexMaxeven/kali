@@ -1,0 +1,17 @@
+{
+  "name": "kali-security-lab-backend",
+  "version": "1.0.0",
+  "description": "Demo backend for security lab (NOT for production)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5"
+  }
+}
+

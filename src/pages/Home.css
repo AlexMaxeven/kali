@@ -1,0 +1,173 @@
+.home {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero {
+  text-align: center;
+  padding: 3rem 0;
+  margin-bottom: 3rem;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #b0b0b0;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.labs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.lab-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  transition: all 0.3s;
+}
+
+.lab-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 107, 107, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.lab-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.lab-card h2 {
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.lab-card p {
+  color: #b0b0b0;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.lab-features {
+  list-style: none;
+  margin-bottom: 1.5rem;
+}
+
+.lab-features li {
+  color: #d0d0d0;
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.lab-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #4ecdc4;
+  font-weight: bold;
+}
+
+.lab-button {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.lab-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+}
+
+.info-section,
+.kali-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.info-section h2,
+.kali-section h2 {
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.info-content p {
+  color: #b0b0b0;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.info-content strong {
+  color: #ff6b6b;
+}
+
+.kali-tools {
+  list-style: none;
+  margin: 1rem 0;
+}
+
+.kali-tools li {
+  color: #d0d0d0;
+  padding: 0.75rem 0;
+  padding-left: 2rem;
+  position: relative;
+}
+
+.kali-tools li::before {
+  content: '🔧';
+  position: absolute;
+  left: 0;
+}
+
+.kali-tools strong {
+  color: #4ecdc4;
+}
+
+.kali-note {
+  color: #999;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .labs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
