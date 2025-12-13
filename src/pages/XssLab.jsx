@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { sanitizeHtml } from '../utils/sanitizeHtml'
 import { useLanguage } from '../contexts/LanguageContext'
 import { getTranslation } from '../utils/translations'
@@ -12,7 +12,9 @@ function XssLab() {
   const [unsafeMode, setUnsafeMode] = useState(true)
   const [userInput, setUserInput] = useState('')
   const [renderedContent, setRenderedContent] = useState('')
-  const [payload, setPayload] = useState('<img onerror="alert(1)">')
+  const [payload, setPayload] = useState('<img src=x onerror="alert(1)">')
+  const outputRef = useRef(null)
+  const iframeRef = useRef(null)
 
   // Очищення стану при розмонтуванні компонента
   useEffect(() => {
@@ -27,6 +29,91 @@ function XssLab() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
+
+  // Прямий доступ до DOM для рендерингу XSS payloads (обхід обмежень React)
+  // Використовуємо iframe для ізоляції, щоб payloads не могли впливати на основну сторінку
+  useEffect(() => {
+    // Невелика затримка, щоб iframe встиг створитися (якщо перестворюється через key)
+    const timer = setTimeout(() => {
+      if (!iframeRef.current) return
+
+      const iframe = iframeRef.current
+      let iframeDoc
+      
+      try {
+        iframeDoc = iframe.contentDocument || iframe.contentWindow.document
+      } catch (e) {
+        // Якщо iframe ще не готовий, спробуємо ще раз через трохи часу
+        return
+      }
+      
+      // Завжди очищаємо попередній контент перед новим рендерингом
+      iframeDoc.open()
+      
+      if (renderedContent) {
+        if (unsafeMode) {
+          // В небезпечному режимі вставляємо HTML напряму в iframe
+          iframeDoc.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <style>
+                  body {
+                    margin: 0;
+                    padding: 1rem;
+                    background: rgba(255, 255, 255, 0.05);
+                    color: #fff;
+                    font-family: system-ui, sans-serif;
+                    animation: fadeIn 0.3s ease-in;
+                  }
+                  @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                  }
+                  img { max-width: 100%; height: auto; display: block; margin: 0.5rem 0; }
+                  svg { display: block; margin: 0.5rem 0; }
+                  input { padding: 0.5rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: #fff; margin: 0.5rem 0; }
+                </style>
+              </head>
+              <body>${renderedContent}</body>
+            </html>
+          `)
+        } else {
+          // В безпечному режимі санітизуємо
+          const sanitized = sanitizeHtml(renderedContent)
+          iframeDoc.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <style>
+                  body {
+                    margin: 0;
+                    padding: 1rem;
+                    background: rgba(255, 255, 255, 0.05);
+                    color: #fff;
+                    font-family: system-ui, sans-serif;
+                    animation: fadeIn 0.3s ease-in;
+                  }
+                  @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                  }
+                </style>
+              </head>
+              <body>${sanitized}</body>
+            </html>
+          `)
+        }
+      } else {
+        // Очищаємо iframe якщо немає що рендерити
+        iframeDoc.write('<!DOCTYPE html><html><head></head><body></body></html>')
+      }
+      
+      iframeDoc.close()
+    }, 10) // Невелика затримка для надійності
+
+    return () => clearTimeout(timer)
+  }, [renderedContent, unsafeMode])
 
   const handlePayloadClick = (payload) => {
     // Очищаємо стан перед новим рендерингом
@@ -58,9 +145,9 @@ function XssLab() {
   }
 
   const commonPayloads = [
-    '<img onerror="alert(1)">',
-    '<script>alert("XSS")</script>',
-    '<svg onload="alert(1)">',
+    '<img src=x onerror="alert(1)">',
+    '<img src="invalid" onerror="alert(\'XSS\')">',
+    '<svg onload="alert(1)"></svg>',
     '<iframe src="javascript:alert(1)"></iframe>',
     '<body onload="alert(1)">',
     '<input onfocus="(function(){if(!window.xssFired){window.xssFired=true;alert(1);this.blur();}})()" autofocus>',
@@ -165,9 +252,12 @@ function XssLab() {
           <div className="output-label">{t('xss.renderedContent')}</div>
           <div className="output-box">
             {renderedContent ? (
-              <div
-                key={renderedContent + unsafeMode}
-                dangerouslySetInnerHTML={{ __html: renderedContent }}
+              <iframe
+                key={`${renderedContent}-${unsafeMode}`}
+                ref={iframeRef}
+                className="xss-iframe"
+                title="XSS Output"
+                sandbox="allow-scripts allow-same-origin"
               />
             ) : (
               <div className="output-placeholder">

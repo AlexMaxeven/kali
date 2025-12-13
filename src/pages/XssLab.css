@@ -184,6 +184,48 @@
   animation: fadeIn 0.3s ease-in;
 }
 
+.output-box img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.output-box svg {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.xss-iframe {
+  width: 100%;
+  min-height: 200px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  display: block;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.output-box input {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #fff;
+  margin: 0.5rem 0;
+}
+
 .output-placeholder {
   color: #666;
   font-style: italic;
