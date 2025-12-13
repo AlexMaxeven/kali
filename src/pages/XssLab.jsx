@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { sanitizeHtml } from '../utils/sanitizeHtml'
 import { useLanguage } from '../contexts/LanguageContext'
 import { getTranslation } from '../utils/translations'
@@ -14,7 +14,26 @@ function XssLab() {
   const [renderedContent, setRenderedContent] = useState('')
   const [payload, setPayload] = useState('<img onerror="alert(1)">')
 
+  // Очищення стану при розмонтуванні компонента
+  useEffect(() => {
+    return () => {
+      if (window.xssFired) {
+        delete window.xssFired
+      }
+    }
+  }, [])
+
+  // Скрол вгору при монтуванні
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
   const handlePayloadClick = (payload) => {
+    // Очищаємо стан перед новим рендерингом
+    if (window.xssFired) {
+      delete window.xssFired
+    }
+    
     setPayload(payload)
     setUserInput(payload)
     // Автоматично рендеримо при виборі швидкого payload
@@ -26,6 +45,11 @@ function XssLab() {
   }
 
   const handleRender = () => {
+    // Очищаємо стан перед новим рендерингом
+    if (window.xssFired) {
+      delete window.xssFired
+    }
+    
     if (unsafeMode) {
       setRenderedContent(userInput)
     } else {
@@ -39,7 +63,7 @@ function XssLab() {
     '<svg onload="alert(1)">',
     '<iframe src="javascript:alert(1)"></iframe>',
     '<body onload="alert(1)">',
-    '<input onfocus="alert(1)" autofocus>',
+    '<input onfocus="(function(){if(!window.xssFired){window.xssFired=true;alert(1);this.blur();}})()" autofocus>',
   ]
 
   return (
@@ -55,13 +79,19 @@ function XssLab() {
         <ToggleMode 
           unsafeMode={unsafeMode} 
           onToggle={() => {
+            // Очищаємо стан перед зміною режиму
+            if (window.xssFired) {
+              delete window.xssFired
+            }
+            
             setUnsafeMode(!unsafeMode)
             // Перерендеримо контент при зміні режиму
-            if (userInput) {
+            if (userInput || renderedContent) {
+              const contentToRender = userInput || renderedContent
               if (!unsafeMode) {
-                setRenderedContent(sanitizeHtml(userInput))
+                setRenderedContent(sanitizeHtml(contentToRender))
               } else {
-                setRenderedContent(userInput)
+                setRenderedContent(contentToRender)
               }
             }
           }}
@@ -136,6 +166,7 @@ function XssLab() {
           <div className="output-box">
             {renderedContent ? (
               <div
+                key={renderedContent + unsafeMode}
                 dangerouslySetInnerHTML={{ __html: renderedContent }}
               />
             ) : (

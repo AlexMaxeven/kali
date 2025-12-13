@@ -176,10 +176,12 @@
   min-height: 50px;
   color: #fff;
   word-wrap: break-word;
+  animation: fadeIn 0.3s ease-in;
 }
 
 .output-box > div {
   color: #fff;
+  animation: fadeIn 0.3s ease-in;
 }
 
 .output-placeholder {

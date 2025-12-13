@@ -1,4 +1,5 @@
-import { Routes, Route, Link, useLocation } from 'react-router-dom'
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useLanguage } from './contexts/LanguageContext'
 import { getTranslation } from './utils/translations'
 import Home from './pages/Home'
@@ -11,6 +12,11 @@ function App() {
   const location = useLocation()
   const { language, toggleLanguage } = useLanguage()
   const t = (key) => getTranslation(key, language)
+
+  // Скрол вгору при зміні сторінки
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [location.pathname])
 
   return (
     <div className="app">
@@ -46,10 +52,11 @@ function App() {
             </Link>
             <button 
               onClick={toggleLanguage}
-              className="language-toggle"
+              className={`language-toggle ${language === 'uk' ? 'active-uk' : 'active-en'}`}
               title={language === 'en' ? 'Перемкнути на українську' : 'Switch to English'}
             >
-              {language === 'en' ? '🇺🇦' : '🇬🇧'}
+              <span className={language === 'en' ? 'active' : ''}>🇬🇧</span>
+              <span className={language === 'uk' ? 'active' : ''}>🇺🇦</span>
             </button>
           </div>
         </div>
@@ -61,6 +68,7 @@ function App() {
           <Route path="/xss" element={<XssLab />} />
           <Route path="/csrf" element={<CsrfLab />} />
           <Route path="/headers" element={<Headers />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 

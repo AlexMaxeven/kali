@@ -100,11 +100,11 @@ button.danger {
 
 button.danger:hover {
   background-color: #c82333;
-}
+  }
 
 button.success {
   background-color: #28a745;
-}
+  }
 
 button.success:hover {
   background-color: #218838;
