@@ -17,3 +17,23 @@
   white-space: pre;
 }
 
+@media (max-width: 768px) {
+  .code-block {
+    padding: 1rem;
+  }
+
+  .code-block code {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .code-block {
+    padding: 0.8rem;
+  }
+
+  .code-block code {
+    font-size: 0.8rem;
+  }
+}
+

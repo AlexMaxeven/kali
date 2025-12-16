@@ -162,12 +162,83 @@
 }
 
 @media (max-width: 768px) {
+  .hero {
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+  }
+
   .hero h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
   }
 
   .labs-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .lab-card {
+    padding: 1.5rem;
+  }
+
+  .lab-icon {
+    font-size: 2.5rem;
+  }
+
+  .lab-card h2 {
+    font-size: 1.3rem;
+  }
+
+  .lab-card p {
+    font-size: 0.95rem;
+  }
+
+  .info-section,
+  .kali-section {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .info-section h2,
+  .kali-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .info-content p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 1.5rem 0;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .lab-card {
+    padding: 1.2rem;
+  }
+
+  .lab-icon {
+    font-size: 2rem;
+  }
+
+  .info-section,
+  .kali-section {
+    padding: 1.2rem;
   }
 }
 

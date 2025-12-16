@@ -326,8 +326,109 @@
 }
 
 @media (max-width: 768px) {
+  .lab-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .lab-description {
+    font-size: 1rem;
+  }
+
+  .session-section {
+    padding: 1.5rem;
+  }
+
+  .login-form {
+    max-width: 100%;
+  }
+
+  .form-group input {
+    font-size: 0.95rem;
+    padding: 0.65rem;
+  }
+
+  .session-card {
+    padding: 1.2rem;
+  }
+
+  .session-card h3 {
+    font-size: 1.2rem;
+  }
+
   .demo-cards {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .demo-card {
+    padding: 1.5rem;
+  }
+
+  .demo-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .action-result {
+    padding: 1.5rem;
+  }
+
+  .result-box {
+    padding: 1.2rem;
+  }
+
+  .result-box strong {
+    font-size: 1rem;
+  }
+
+  .history-section {
+    padding: 1.5rem;
+  }
+
+  .history-item {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .timestamp {
+    min-width: auto;
+  }
+
+  .explanation-card {
+    padding: 1.5rem;
+  }
+
+  .explanation-card h3 {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .lab-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .lab-description {
+    font-size: 0.95rem;
+  }
+
+  .session-section {
+    padding: 1.2rem;
+  }
+
+  .demo-card {
+    padding: 1.2rem;
+  }
+
+  .action-result {
+    padding: 1.2rem;
+  }
+
+  .history-section {
+    padding: 1.2rem;
+  }
+
+  .explanation-card {
+    padding: 1.2rem;
   }
 }
 

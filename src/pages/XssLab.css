@@ -297,3 +297,105 @@
   color: #fff;
 }
 
+@media (max-width: 768px) {
+  .lab-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .lab-description {
+    font-size: 1rem;
+  }
+
+  .input-section {
+    padding: 1.5rem;
+  }
+
+  .input-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .input-with-button {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .input-with-button input {
+    width: 100%;
+    font-size: 0.95rem;
+  }
+
+  .render-btn {
+    width: 100%;
+    font-size: 0.95rem;
+  }
+
+  .quick-payloads h3 {
+    font-size: 1.1rem;
+  }
+
+  .payload-buttons {
+    flex-direction: column;
+  }
+
+  .payload-btn {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.8rem;
+    word-break: break-all;
+  }
+
+  .output-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .xss-iframe {
+    min-height: 200px;
+  }
+
+  .warning-banner {
+    padding: 1rem;
+  }
+
+  .warning-banner strong {
+    font-size: 1rem;
+  }
+
+  .explanation-card {
+    padding: 1.5rem;
+  }
+
+  .explanation-card h3 {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .lab-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .lab-description {
+    font-size: 0.95rem;
+  }
+
+  .input-section {
+    padding: 1.2rem;
+  }
+
+  .input-section h2 {
+    font-size: 1.2rem;
+  }
+
+  .payload-btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.7rem;
+  }
+
+  .xss-iframe {
+    min-height: 150px;
+  }
+
+  .explanation-card {
+    padding: 1.2rem;
+  }
+}
+
