@@ -145,14 +145,37 @@ function CsrfLab() {
         throw new Error('Network error: ' + networkError.message)
       }
 
-      // Перевіряємо чи backend доступний (на GitHub Pages буде 404)
-      if (!response || response.status === 404 || response.status === 0 || response.status >= 500) {
+      // Перевіряємо чи backend доступний (на GitHub Pages буде 404 або інший помилковий статус)
+      // Також перевіряємо, чи response взагалі існує
+      // response.type === 'opaque' або 'opaqueredirect' означає CORS помилку або недоступність
+      if (!response || 
+          response.status === 404 || 
+          response.status === 0 || 
+          response.status >= 500 ||
+          response.type === 'opaque' ||
+          response.type === 'opaqueredirect') {
         // Backend недоступний - використовуємо симуляцію
+        console.log('Backend unavailable - status:', response?.status, 'type:', response?.type)
         throw new Error('Backend unavailable')
       }
 
+      // Спробуємо парсити JSON, якщо не вдається - це також означає, що backend недоступний
+      let data
+      try {
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json()
+        } else {
+          // Якщо не JSON, то це може бути HTML сторінка 404 з GitHub Pages
+          throw new Error('Non-JSON response - backend unavailable')
+        }
+      } catch (parseError) {
+        // Якщо не вдалося парсити JSON, то backend недоступний
+        console.log('Failed to parse response as JSON, using simulation:', parseError.message)
+        throw new Error('Backend unavailable - cannot parse response')
+      }
+
       if (response.ok) {
-        const data = await response.json().catch(() => ({}))
         addToHistory('action.success', 'success', withToken, { message: data.message || 'Email changed' })
         setLastAction('success')
         setLastActionWithToken(withToken)
@@ -165,8 +188,6 @@ function CsrfLab() {
         }, 100)
       } else {
         // Backend доступний, але повернув помилку - це реальна помилка
-        const data = await response.json().catch(() => ({ error: 'Unknown error' }))
-        
         // Логіка для реального backend:
         // - Незахищений endpoint (без токену) - має працювати (вразливий)
         // - Захищений endpoint з токеном - має працювати (токен правильний)
