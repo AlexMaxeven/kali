@@ -148,24 +148,22 @@ function CsrfLab() {
       // Перевіряємо чи backend доступний (на GitHub Pages буде 404, 405, або інший помилковий статус)
       // На GitHub Pages завжди використовуємо симуляцію
       
-      // Перевіряємо статус - якщо 404, 405, 0, або >= 500, то backend недоступний
+      // Перевіряємо статус ПЕРШИМ - якщо 404, 405, 0, або >= 500, то backend недоступний
       // 405 = Method Not Allowed (GitHub Pages не підтримує POST запити)
       // 403 = Forbidden (може бути на GitHub Pages)
       // 501, 502, 503, 504 = різні помилки сервера
-      if (!response || 
-          response.status === 404 || 
-          response.status === 405 || 
-          response.status === 403 ||
-          response.status === 0 || 
-          response.status >= 500) {
-        console.log('Backend unavailable - status:', response?.status)
+      const backendUnavailableStatuses = [0, 403, 404, 405, 500, 501, 502, 503, 504]
+      if (!response || backendUnavailableStatuses.includes(response.status) || response.status >= 500) {
+        console.log('Backend unavailable - status:', response?.status, 'type:', response?.type)
         throw new Error('Backend unavailable')
       }
 
-      // Перевіряємо content-type - якщо не JSON, то це HTML сторінка 404 з GitHub Pages
+      // Якщо response.ok === false, це також може означати недоступність backend на GitHub Pages
+      // Але спочатку спробуємо перевірити content-type
       const contentType = response.headers?.get('content-type') || ''
-      if (contentType && !contentType.includes('application/json')) {
-        console.log('Backend unavailable - non-JSON response, content-type:', contentType)
+      if (!response.ok && (!contentType || !contentType.includes('application/json'))) {
+        // Якщо response.ok === false і content-type не JSON, то це точно недоступність backend
+        console.log('Backend unavailable - response.ok is false and non-JSON, status:', response.status, 'content-type:', contentType)
         throw new Error('Backend unavailable')
       }
 
@@ -175,7 +173,7 @@ function CsrfLab() {
         data = await response.json()
       } catch (parseError) {
         // Якщо не вдалося парсити JSON, то backend недоступний (на GitHub Pages буде HTML)
-        console.log('Backend unavailable - cannot parse response as JSON:', parseError.message)
+        console.log('Backend unavailable - cannot parse response as JSON, status:', response.status, 'error:', parseError.message)
         throw new Error('Backend unavailable')
       }
 
