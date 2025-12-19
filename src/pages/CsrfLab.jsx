@@ -132,15 +132,24 @@ function CsrfLab() {
     }
 
     try {
-      const response = await fetch(`/api/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(body),
-      }).catch((networkError) => {
+      let response
+      try {
+        response = await fetch(`/api/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        })
+      } catch (networkError) {
         // Мережева помилка - backend недоступний
         throw new Error('Network error: ' + networkError.message)
-      })
+      }
+
+      // Перевіряємо чи backend доступний (на GitHub Pages буде 404)
+      if (!response || response.status === 404 || response.status === 0 || response.status >= 500) {
+        // Backend недоступний - використовуємо симуляцію
+        throw new Error('Backend unavailable')
+      }
 
       if (response.ok) {
         const data = await response.json().catch(() => ({}))
@@ -155,12 +164,6 @@ function CsrfLab() {
           }
         }, 100)
       } else {
-        // Backend повернув помилку - перевіряємо чи це реальна помилка чи просто недоступний backend
-        if (response.status === 404 || response.status === 0 || response.status >= 500) {
-          // Backend недоступний (404 на GitHub Pages) - використовуємо симуляцію
-          throw new Error('Backend unavailable')
-        }
-        
         // Backend доступний, але повернув помилку - це реальна помилка
         const data = await response.json().catch(() => ({ error: 'Unknown error' }))
         
@@ -201,6 +204,7 @@ function CsrfLab() {
     } catch (error) {
       // Backend недоступний - використовуємо симуляцію
       console.log('Backend unavailable, using simulation mode:', error.message)
+      console.log('Simulation params:', { withToken, useProtectedEndpoint })
       
       // Логіка симуляції:
       // - З токеном (захищений endpoint) → успішно (токен правильний)
@@ -208,16 +212,19 @@ function CsrfLab() {
       // - Захищений endpoint БЕЗ токену → заблоковано (правильний захист)
       if (useProtectedEndpoint) {
         // Захищений endpoint БЕЗ токену - має бути заблоковано
+        console.log('Simulating: Protected endpoint without token -> BLOCKED')
         addToHistory('action.blockedSimulated', 'error', false)
         setLastAction('blocked')
         setLastActionWithToken(false)
       } else if (withToken) {
         // Захищений endpoint з токеном - має працювати
+        console.log('Simulating: Protected endpoint with token -> SUCCESS')
         addToHistory('action.successSimulated', 'success', true)
         setLastAction('success')
         setLastActionWithToken(true)
       } else {
         // Незахищений endpoint без токену - вразливий до CSRF, тому працює
+        console.log('Simulating: Unprotected endpoint without token -> SUCCESS (vulnerable)')
         addToHistory('action.successVulnerableSimulated', 'success', false)
         setLastAction('success')
         setLastActionWithToken(false)
