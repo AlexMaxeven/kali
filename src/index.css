@@ -31,6 +31,7 @@ body {
   max-width: 100vw;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  transition: opacity 0.3s ease-in-out;
 }
 
 h1, h2, h3, h4, h5, h6 {

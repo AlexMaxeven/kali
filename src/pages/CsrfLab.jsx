@@ -51,17 +51,12 @@ function CsrfLab() {
     e.preventDefault()
     
     if (!username.trim()) {
-      addToHistory(language === 'en' ? '❌ Please enter a username' : '❌ Будь ласка, введіть ім\'я користувача', 'error')
+      addToHistory('login.error', 'error')
       return
     }
     
     // Додаємо повідомлення про спробу логіну
-    addToHistory(
-      language === 'en' 
-        ? '⏳ Attempting to login...' 
-        : '⏳ Спроба входу...',
-      'info'
-    )
+    addToHistory('login.attempting', 'info')
     
     try {
       const response = await fetch('/api/login', {
@@ -84,7 +79,7 @@ function CsrfLab() {
           const simulatedToken = `demo-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
           setCsrfToken(simulatedToken)
         }
-        addToHistory(language === 'en' ? '✅ Logged in successfully' : '✅ Успішно залогінені', 'success')
+        addToHistory('login.success', 'success')
         
         // Скрол до демо секції після логіну
         setTimeout(() => {
@@ -103,7 +98,7 @@ function CsrfLab() {
       // Генеруємо унікальний токен для симуляції
       const simulatedToken = `demo-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       setCsrfToken(simulatedToken)
-      addToHistory(language === 'en' ? '✅ Logged in successfully (simulated)' : '✅ Успішно залогінені (симуляція)', 'success')
+      addToHistory('login.successSimulated', 'success')
       
       // Скрол до демо секції після логіну
       setTimeout(() => {
@@ -117,12 +112,7 @@ function CsrfLab() {
   const handleAction = async (withToken, useProtectedEndpoint = false) => {
     // useProtectedEndpoint=true означає захищений endpoint БЕЗ токену (має бути заблоковано)
     if (!csrfToken && withToken) {
-      addToHistory(
-        language === 'en' 
-          ? '❌ CSRF token not available. Please wait or try logging in again.' 
-          : '❌ CSRF токен недоступний. Будь ласка, зачекайте або спробуйте увійти знову.',
-        'error'
-      )
+      addToHistory('token.notAvailable', 'error')
       return
     }
 
@@ -154,10 +144,7 @@ function CsrfLab() {
 
       if (response.ok) {
         const data = await response.json().catch(() => ({}))
-        const message = language === 'en' 
-          ? `✅ Action successful: ${data.message || 'Email changed'}` 
-          : `✅ Дія успішна: ${data.message || 'Email змінено'}`
-        addToHistory(message, 'success', withToken)
+        addToHistory('action.success', 'success', withToken, { message: data.message || 'Email changed' })
         setLastAction('success')
         setLastActionWithToken(withToken)
         
@@ -184,34 +171,22 @@ function CsrfLab() {
         
         if (useProtectedEndpoint) {
           // Захищений endpoint БЕЗ токену - має бути заблоковано
-          const message = language === 'en'
-            ? `❌ Action blocked: ${data.error || 'Missing CSRF token'}`
-            : `❌ Дія заблокована: ${data.error || 'Відсутній CSRF токен'}`
-          addToHistory(message, 'error', false)
+          addToHistory('action.blocked', 'error', false, { error: data.error || 'Missing CSRF token' })
           setLastAction('blocked')
           setLastActionWithToken(false)
         } else if (!withToken) {
           // Незахищений endpoint - має працювати (вразливий до CSRF)
-          const message = language === 'en'
-            ? `✅ Action successful: Email changed (vulnerable endpoint - no CSRF protection)`
-            : `✅ Дія успішна: Email змінено (вразливий endpoint - немає CSRF захисту)`
-          addToHistory(message, 'success', false)
+          addToHistory('action.successVulnerable', 'success', false)
           setLastAction('success')
           setLastActionWithToken(false)
         } else if (data.error?.includes('CSRF') || data.error?.includes('token')) {
           // Захищений endpoint, але токен невалідний (не повинно бути, бо токен правильний)
-          const message = language === 'en'
-            ? `❌ Action blocked: ${data.error || 'Invalid CSRF token'}`
-            : `❌ Дія заблокована: ${data.error || 'Невірний CSRF токен'}`
-          addToHistory(message, 'error', true)
+          addToHistory('action.blockedInvalidToken', 'error', true, { error: data.error || 'Invalid CSRF token' })
           setLastAction('blocked')
           setLastActionWithToken(true)
         } else {
           // Інша помилка
-          const message = language === 'en'
-            ? `❌ Action blocked: ${data.error || 'Request failed'}`
-            : `❌ Дія заблокована: ${data.error || 'Помилка запиту'}`
-          addToHistory(message, 'error', withToken)
+          addToHistory('action.blockedRequestFailed', 'error', withToken, { error: data.error || 'Request failed' })
           setLastAction('blocked')
           setLastActionWithToken(withToken)
         }
@@ -233,26 +208,17 @@ function CsrfLab() {
       // - Захищений endpoint БЕЗ токену → заблоковано (правильний захист)
       if (useProtectedEndpoint) {
         // Захищений endpoint БЕЗ токену - має бути заблоковано
-        const message = language === 'en'
-          ? '❌ Action blocked: Missing CSRF token (simulated - protection working!)'
-          : '❌ Дія заблокована: Відсутній CSRF токен (симуляція - захист працює!)'
-        addToHistory(message, 'error', false)
+        addToHistory('action.blockedSimulated', 'error', false)
         setLastAction('blocked')
         setLastActionWithToken(false)
       } else if (withToken) {
         // Захищений endpoint з токеном - має працювати
-        const message = language === 'en' 
-          ? '✅ Action successful: Email changed (simulated - CSRF token validated)' 
-          : '✅ Дія успішна: Email змінено (симуляція - CSRF токен перевірено)'
-        addToHistory(message, 'success', true)
+        addToHistory('action.successSimulated', 'success', true)
         setLastAction('success')
         setLastActionWithToken(true)
       } else {
         // Незахищений endpoint без токену - вразливий до CSRF, тому працює
-        const message = language === 'en'
-          ? '✅ Action successful: Email changed (simulated - NO CSRF protection, vulnerable!)'
-          : '✅ Дія успішна: Email змінено (симуляція - НЕМАЄ CSRF захисту, вразливо!)'
-        addToHistory(message, 'success', false)
+        addToHistory('action.successVulnerableSimulated', 'success', false)
         setLastAction('success')
         setLastActionWithToken(false)
       }
@@ -266,13 +232,58 @@ function CsrfLab() {
     }
   }
 
-  const addToHistory = (message, type, withToken = null) => {
+  const addToHistory = (messageKey, type, withToken = null, params = {}) => {
     // Визначаємо тип для історії: якщо success без токену - це vulnerable
     const historyType = (type === 'success' && withToken === false) ? 'vulnerable' : type
     setActionHistory(prev => [
-      { message, type: historyType, timestamp: new Date().toLocaleTimeString() },
+      { messageKey, type: historyType, timestamp: new Date().toLocaleTimeString(), params },
       ...prev.slice(0, 9)
     ])
+  }
+
+  const getHistoryMessage = (item) => {
+    // Якщо це старий формат (без messageKey), повертаємо як є
+    if (item.message) return item.message
+    
+    if (!item.messageKey) return ''
+    
+    // Новий формат - використовуємо переклади
+    const params = item.params || {}
+    const messages = {
+      'login.attempting': language === 'en' ? '⏳ Attempting to login...' : '⏳ Спроба входу...',
+      'login.success': language === 'en' ? '✅ Logged in successfully' : '✅ Успішно залогінені',
+      'login.successSimulated': language === 'en' ? '✅ Logged in successfully (simulated)' : '✅ Успішно залогінені (симуляція)',
+      'login.error': language === 'en' ? '❌ Please enter a username' : '❌ Будь ласка, введіть ім\'я користувача',
+      'token.notAvailable': language === 'en' 
+        ? '❌ CSRF token not available. Please wait or try logging in again.' 
+        : '❌ CSRF токен недоступний. Будь ласка, зачекайте або спробуйте увійти знову.',
+      'action.success': language === 'en' 
+        ? `✅ Action successful: ${params.message || 'Email changed'}` 
+        : `✅ Дія успішна: ${params.message || 'Email змінено'}`,
+      'action.successVulnerable': language === 'en'
+        ? '✅ Action successful: Email changed (vulnerable endpoint - no CSRF protection)'
+        : '✅ Дія успішна: Email змінено (вразливий endpoint - немає CSRF захисту)',
+      'action.successSimulated': language === 'en'
+        ? '✅ Action successful: Email changed (simulated - CSRF token validated)'
+        : '✅ Дія успішна: Email змінено (симуляція - CSRF токен перевірено)',
+      'action.successVulnerableSimulated': language === 'en'
+        ? '✅ Action successful: Email changed (simulated - NO CSRF protection, vulnerable!)'
+        : '✅ Дія успішна: Email змінено (симуляція - НЕМАЄ CSRF захисту, вразливо!)',
+      'action.blocked': language === 'en'
+        ? `❌ Action blocked: ${params.error || 'Missing CSRF token'}`
+        : `❌ Дія заблокована: ${params.error || 'Відсутній CSRF токен'}`,
+      'action.blockedSimulated': language === 'en'
+        ? '❌ Action blocked: Missing CSRF token (simulated - protection working!)'
+        : '❌ Дія заблокована: Відсутній CSRF токен (симуляція - захист працює!)',
+      'action.blockedInvalidToken': language === 'en'
+        ? `❌ Action blocked: ${params.error || 'Invalid CSRF token'}`
+        : `❌ Дія заблокована: ${params.error || 'Невірний CSRF токен'}`,
+      'action.blockedRequestFailed': language === 'en'
+        ? `❌ Action blocked: ${params.error || 'Request failed'}`
+        : `❌ Дія заблокована: ${params.error || 'Помилка запиту'}`,
+    }
+    
+    return messages[item.messageKey] || item.messageKey
   }
 
   const handleLogout = () => {
@@ -285,7 +296,7 @@ function CsrfLab() {
   }
 
   return (
-    <div className="csrf-lab">
+    <div className={`csrf-lab language-${language}`} key={language}>
       <div className="lab-header">
         <h1>🔵 {t('csrf.title')}</h1>
         <p className="lab-description">
@@ -475,7 +486,7 @@ function CsrfLab() {
                 actionHistory.map((item, idx) => (
                   <div key={idx} className={`history-item ${item.type}`}>
                     <span className="timestamp">{item.timestamp}</span>
-                    <span className="message">{item.message}</span>
+                    <span className="message">{getHistoryMessage(item)}</span>
                   </div>
                 ))
               )}
