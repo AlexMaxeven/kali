@@ -145,11 +145,19 @@ function CsrfLab() {
         throw new Error('Network error: ' + networkError.message)
       }
 
-      // Перевіряємо чи backend доступний (на GitHub Pages буде 404 або інший помилковий статус)
+      // Перевіряємо чи backend доступний (на GitHub Pages буде 404, 405, або інший помилковий статус)
       // На GitHub Pages завжди використовуємо симуляцію
       
-      // Перевіряємо статус - якщо 404, 0, або >= 500, то backend недоступний
-      if (!response || response.status === 404 || response.status === 0 || response.status >= 500) {
+      // Перевіряємо статус - якщо 404, 405, 0, або >= 500, то backend недоступний
+      // 405 = Method Not Allowed (GitHub Pages не підтримує POST запити)
+      // 403 = Forbidden (може бути на GitHub Pages)
+      // 501, 502, 503, 504 = різні помилки сервера
+      if (!response || 
+          response.status === 404 || 
+          response.status === 405 || 
+          response.status === 403 ||
+          response.status === 0 || 
+          response.status >= 500) {
         console.log('Backend unavailable - status:', response?.status)
         throw new Error('Backend unavailable')
       }
