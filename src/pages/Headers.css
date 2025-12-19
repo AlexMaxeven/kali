@@ -14,6 +14,8 @@
   color: #b0b0b0;
   line-height: 1.8;
   font-size: 1.1rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .headers-grid {
@@ -21,6 +23,20 @@
   grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   gap: 2rem;
   margin-bottom: 3rem;
+}
+
+/* Забезпечуємо, що код не обрізається */
+.header-card pre,
+.header-card code {
+  overflow-x: auto;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.header-description,
+.header-explanation ul li {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .header-card {
@@ -207,15 +223,28 @@
 
   .header-card h2 {
     font-size: 1.3rem;
+    word-wrap: break-word;
   }
 
   .header-description {
     font-size: 0.95rem;
+    line-height: 1.6;
   }
 
   .header-example h3,
   .header-explanation h3 {
     font-size: 0.95rem;
+  }
+
+  .header-card pre,
+  .header-card code {
+    font-size: 0.8rem;
+    padding: 0.75rem;
+  }
+
+  .header-tradeoff {
+    font-size: 0.85rem;
+    padding: 0.85rem;
   }
 
   .implementation-section {
@@ -262,6 +291,43 @@
 
   .summary-section {
     padding: 1.2rem;
+  }
+
+  .header-card {
+    padding: 1rem;
+  }
+
+  .header-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .header-description {
+    font-size: 0.9rem;
+  }
+
+  .header-card pre,
+  .header-card code {
+    font-size: 0.75rem;
+    padding: 0.6rem;
+  }
+
+  .header-tradeoff {
+    font-size: 0.8rem;
+    padding: 0.75rem;
+  }
+
+  .header-explanation ul li {
+    font-size: 0.9rem;
+    padding-left: 1.2rem;
+  }
+
+  .summary-content p {
+    font-size: 0.9rem;
+  }
+
+  .summary-list li {
+    font-size: 0.9rem;
+    padding-left: 1.5rem;
   }
 }
 

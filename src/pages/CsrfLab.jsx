@@ -114,7 +114,8 @@ function CsrfLab() {
     }
   }
 
-  const handleAction = async (withToken) => {
+  const handleAction = async (withToken, useProtectedEndpoint = false) => {
+    // useProtectedEndpoint=true означає захищений endpoint БЕЗ токену (має бути заблоковано)
     if (!csrfToken && withToken) {
       addToHistory(
         language === 'en' 
@@ -125,10 +126,20 @@ function CsrfLab() {
       return
     }
 
-    const action = withToken ? 'change-email' : 'change-email-no-token'
-    const body = withToken 
-      ? { email: 'attacker@evil.com', csrfToken }
-      : { email: 'attacker@evil.com' }
+    let action, body
+    if (useProtectedEndpoint) {
+      // Захищений endpoint БЕЗ токену - має бути заблоковано
+      action = 'change-email'
+      body = { email: 'attacker@evil.com' } // НЕ додаємо токен!
+    } else if (withToken) {
+      // Захищений endpoint З токеном
+      action = 'change-email'
+      body = { email: 'attacker@evil.com', csrfToken }
+    } else {
+      // Незахищений endpoint
+      action = 'change-email-no-token'
+      body = { email: 'attacker@evil.com' }
+    }
 
     try {
       const response = await fetch(`/api/${action}`, {
@@ -169,9 +180,17 @@ function CsrfLab() {
         // Логіка для реального backend:
         // - Незахищений endpoint (без токену) - має працювати (вразливий)
         // - Захищений endpoint з токеном - має працювати (токен правильний)
-        // - Захищений endpoint без токену - має бути заблоковано (але це не наш випадок, бо withToken=true означає що токен є)
+        // - Захищений endpoint без токену - має бути заблоковано
         
-        if (!withToken) {
+        if (useProtectedEndpoint) {
+          // Захищений endpoint БЕЗ токену - має бути заблоковано
+          const message = language === 'en'
+            ? `❌ Action blocked: ${data.error || 'Missing CSRF token'}`
+            : `❌ Дія заблокована: ${data.error || 'Відсутній CSRF токен'}`
+          addToHistory(message, 'error', false)
+          setLastAction('blocked')
+          setLastActionWithToken(false)
+        } else if (!withToken) {
           // Незахищений endpoint - має працювати (вразливий до CSRF)
           const message = language === 'en'
             ? `✅ Action successful: Email changed (vulnerable endpoint - no CSRF protection)`
@@ -211,7 +230,16 @@ function CsrfLab() {
       // Логіка симуляції:
       // - З токеном (захищений endpoint) → успішно (токен правильний)
       // - Без токену (незахищений endpoint) → успішно (немає перевірки, тому вразливий)
-      if (withToken) {
+      // - Захищений endpoint БЕЗ токену → заблоковано (правильний захист)
+      if (useProtectedEndpoint) {
+        // Захищений endpoint БЕЗ токену - має бути заблоковано
+        const message = language === 'en'
+          ? '❌ Action blocked: Missing CSRF token (simulated - protection working!)'
+          : '❌ Дія заблокована: Відсутній CSRF токен (симуляція - захист працює!)'
+        addToHistory(message, 'error', false)
+        setLastAction('blocked')
+        setLastActionWithToken(false)
+      } else if (withToken) {
         // Захищений endpoint з токеном - має працювати
         const message = language === 'en' 
           ? '✅ Action successful: Email changed (simulated - CSRF token validated)' 
@@ -347,13 +375,42 @@ function CsrfLab() {
                 </button>
               </div>
 
+              <div className="demo-card warning">
+                <h3>🛡️ {language === 'en' ? 'Protected Endpoint (No Token)' : 'Захищений Endpoint (Без токену)'}</h3>
+                <p>
+                  {language === 'en'
+                    ? 'What happens when an attacker tries to use the protected endpoint without a CSRF token? The request is BLOCKED!'
+                    : 'Що відбувається, коли атакуючий намагається використати захищений endpoint без CSRF токену? Запит БЛОКУЄТЬСЯ!'}
+                </p>
+                <CodeBlock language="html">
+{`<!-- Attacker tries protected endpoint without token -->
+<form action="http://localhost:3001/api/change-email" method="POST">
+  <input type="hidden" name="email" value="attacker@evil.com">
+  <!-- No CSRF token - request will be BLOCKED! -->
+  <button>Click for free prize!</button>
+</form>`}
+                </CodeBlock>
+                <button 
+                  onClick={() => handleAction(false, true)}
+                  className="demo-btn warning"
+                >
+                  {language === 'en' ? 'Test Protection' : 'Тестувати захист'}
+                </button>
+              </div>
+
               <div className="demo-card safe">
                 <h3>✅ {t('csrf.withToken')}</h3>
                 <p>
                   {t('csrf.withTokenDesc')}
                 </p>
                 <CodeBlock language="html">
-{`<!-- Attacker's page (will fail) -->
+{csrfToken ? `<!-- Legitimate request with valid CSRF token -->
+<form action="http://localhost:3001/api/change-email" method="POST">
+  <input type="hidden" name="email" value="attacker@evil.com">
+  <input type="hidden" name="csrfToken" value="${csrfToken}">
+  <!-- This token was obtained from the legitimate session -->
+  <button>Click for free prize!</button>
+</form>` : `<!-- Attacker's page (will fail) -->
 <form action="http://localhost:3001/api/change-email" method="POST">
   <input type="hidden" name="email" value="attacker@evil.com">
   <input type="hidden" name="csrfToken" value="???">
