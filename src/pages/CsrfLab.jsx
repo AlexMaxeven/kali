@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { getTranslation } from '../utils/translations'
 import CodeBlock from '../components/CodeBlock'
@@ -12,39 +12,118 @@ function CsrfLab() {
   const [csrfToken, setCsrfToken] = useState('')
   const [lastAction, setLastAction] = useState('')
   const [actionHistory, setActionHistory] = useState([])
+  const sessionRef = useRef(null)
+  const demoSectionRef = useRef(null)
+  const resultSectionRef = useRef(null)
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !csrfToken) {
+      // Спробуємо отримати токен з backend, якщо він доступний
       fetch('/api/csrf-token', {
         credentials: 'include',
       })
-        .then(res => res.json())
-        .then(data => setCsrfToken(data.token))
-        .catch(() => setCsrfToken('demo-token-12345'))
+        .then(res => {
+          if (res.ok) {
+            return res.json()
+          }
+          throw new Error('Backend unavailable')
+        })
+        .then(data => {
+          if (data.token) {
+            setCsrfToken(data.token)
+          } else {
+            // Якщо токен не прийшов, генеруємо для симуляції
+            setCsrfToken(`demo-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`)
+          }
+        })
+        .catch(() => {
+          // Backend недоступний - генеруємо токен для симуляції
+          setCsrfToken(prevToken => {
+            if (prevToken) return prevToken
+            return `demo-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          })
+        })
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn]) // Прибрано csrfToken, щоб уникнути зациклення
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    
+    if (!username.trim()) {
+      addToHistory(language === 'en' ? '❌ Please enter a username' : '❌ Будь ласка, введіть ім\'я користувача', 'error')
+      return
+    }
+    
+    // Додаємо повідомлення про спробу логіну
+    addToHistory(
+      language === 'en' 
+        ? '⏳ Attempting to login...' 
+        : '⏳ Спроба входу...',
+      'info'
+    )
+    
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ username }),
+      }).catch((networkError) => {
+        // Якщо мережева помилка (наприклад, CORS або недоступний сервер)
+        throw new Error('Network error: ' + networkError.message)
       })
+      
       if (response.ok) {
+        const data = await response.json().catch(() => ({}))
         setIsLoggedIn(true)
+        if (data.csrfToken) {
+          setCsrfToken(data.csrfToken)
+        } else {
+          // Якщо токен не прийшов, генеруємо для симуляції
+          const simulatedToken = `demo-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          setCsrfToken(simulatedToken)
+        }
         addToHistory(language === 'en' ? '✅ Logged in successfully' : '✅ Успішно залогінені', 'success')
+        
+        // Скрол до демо секції після логіну
+        setTimeout(() => {
+          if (demoSectionRef.current) {
+            demoSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
+      } else {
+        // Backend доступний, але повернув помилку - використовуємо симуляцію
+        throw new Error('Backend returned error, using simulation')
       }
     } catch (error) {
+      // Backend недоступний (наприклад, на GitHub Pages) - використовуємо симуляцію
+      console.log('Backend unavailable, using simulation mode:', error.message)
       setIsLoggedIn(true)
-      setCsrfToken('demo-token-12345')
-        addToHistory(language === 'en' ? '✅ Logged in successfully (simulated)' : '✅ Успішно залогінені (симуляція)', 'success')
+      // Генеруємо унікальний токен для симуляції
+      const simulatedToken = `demo-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      setCsrfToken(simulatedToken)
+      addToHistory(language === 'en' ? '✅ Logged in successfully (simulated)' : '✅ Успішно залогінені (симуляція)', 'success')
+      
+      // Скрол до демо секції після логіну
+      setTimeout(() => {
+        if (demoSectionRef.current) {
+          demoSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 100)
     }
   }
 
   const handleAction = async (withToken) => {
+    if (!csrfToken && withToken) {
+      addToHistory(
+        language === 'en' 
+          ? '❌ CSRF token not available. Please wait or try logging in again.' 
+          : '❌ CSRF токен недоступний. Будь ласка, зачекайте або спробуйте увійти знову.',
+        'error'
+      )
+      return
+    }
+
     const action = withToken ? 'change-email' : 'change-email-no-token'
     const body = withToken 
       ? { email: 'attacker@evil.com', csrfToken }
@@ -56,25 +135,94 @@ function CsrfLab() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(body),
+      }).catch((networkError) => {
+        // Мережева помилка - backend недоступний
+        throw new Error('Network error: ' + networkError.message)
       })
 
-      const data = await response.json()
-      
       if (response.ok) {
-        addToHistory(`✅ Action successful: ${data.message}`, 'success')
+        const data = await response.json().catch(() => ({}))
+        const message = language === 'en' 
+          ? `✅ Action successful: ${data.message || 'Email changed'}` 
+          : `✅ Дія успішна: ${data.message || 'Email змінено'}`
+        addToHistory(message, 'success')
         setLastAction('success')
+        
+        // Скрол до результату
+        setTimeout(() => {
+          if (resultSectionRef.current) {
+            resultSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
       } else {
-        addToHistory(`❌ Action blocked: ${data.error}`, 'error')
-        setLastAction('blocked')
+        // Backend повернув помилку - перевіряємо чи це реальна помилка чи просто недоступний backend
+        if (response.status === 404 || response.status === 0) {
+          // Backend недоступний (404 на GitHub Pages) - використовуємо симуляцію
+          throw new Error('Backend unavailable')
+        }
+        
+        // Backend доступний, але повернув помилку - це реальна помилка
+        const data = await response.json().catch(() => ({ error: 'Unknown error' }))
+        
+        // Якщо це захищений endpoint без токену - це правильно заблоковано
+        if (withToken && (data.error?.includes('CSRF') || data.error?.includes('token'))) {
+          const message = language === 'en'
+            ? `❌ Action blocked: ${data.error || 'Invalid CSRF token'}`
+            : `❌ Дія заблокована: ${data.error || 'Невірний CSRF токен'}`
+          addToHistory(message, 'error')
+          setLastAction('blocked')
+        } else if (!withToken) {
+          // Незахищений endpoint - має працювати (вразливий)
+          const message = language === 'en'
+            ? `✅ Action successful: Email changed (vulnerable endpoint - no CSRF protection)`
+            : `✅ Дія успішна: Email змінено (вразливий endpoint - немає CSRF захисту)`
+          addToHistory(message, 'success')
+          setLastAction('success')
+        } else {
+          // Інша помилка
+          const message = language === 'en'
+            ? `❌ Action blocked: ${data.error || 'Request failed'}`
+            : `❌ Дія заблокована: ${data.error || 'Помилка запиту'}`
+          addToHistory(message, 'error')
+          setLastAction('blocked')
+        }
+        
+        // Скрол до результату
+        setTimeout(() => {
+          if (resultSectionRef.current) {
+            resultSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
       }
     } catch (error) {
+      // Backend недоступний - використовуємо симуляцію
+      console.log('Backend unavailable, using simulation mode:', error.message)
+      
+      // Логіка симуляції:
+      // - З токеном (захищений endpoint) → успішно (токен правильний)
+      // - Без токену (незахищений endpoint) → успішно (немає перевірки, тому вразливий)
       if (withToken) {
-        addToHistory('✅ Action successful: Email changed (simulated)', 'success')
+        // Захищений endpoint з токеном - має працювати
+        const message = language === 'en' 
+          ? '✅ Action successful: Email changed (simulated - CSRF token validated)' 
+          : '✅ Дія успішна: Email змінено (симуляція - CSRF токен перевірено)'
+        addToHistory(message, 'success')
         setLastAction('success')
       } else {
-        addToHistory('❌ Action blocked: Missing CSRF token (simulated)', 'error')
-        setLastAction('blocked')
+        // Незахищений endpoint без токену - вразливий до CSRF, тому працює
+        const message = language === 'en'
+          ? '✅ Action successful: Email changed (simulated - NO CSRF protection, vulnerable!)'
+          : '✅ Дія успішна: Email змінено (симуляція - НЕМАЄ CSRF захисту, вразливо!)'
+        addToHistory(message, 'success')
+        setLastAction('success')
       }
+      
+      // Скрол до результату
+      setTimeout(() => {
+        if (resultSectionRef.current) {
+          resultSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 100)
     }
   }
 
@@ -102,7 +250,7 @@ function CsrfLab() {
         </p>
       </div>
 
-      <div className="session-section">
+      <div className="session-section" ref={sessionRef}>
         <h2>{t('csrf.sessionManagement')}</h2>
         {!isLoggedIn ? (
           <div className="login-form">
@@ -116,6 +264,8 @@ function CsrfLab() {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder={t('csrf.enterUsername')}
                   required
+                  lang="uk"
+                  inputMode="text"
                 />
               </div>
               <button type="submit" className="login-btn">
@@ -133,7 +283,7 @@ function CsrfLab() {
             <div className="session-card">
               <h3>✅ {t('csrf.activeSession')}</h3>
               <p><strong>{t('csrf.username')}</strong> {username}</p>
-              <p><strong>{t('csrf.csrfToken')}</strong> <code>{csrfToken}</code></p>
+              <p><strong>{t('csrf.csrfToken')}</strong> <code>{csrfToken || '(generating...)'}</code></p>
               <p className="session-note">
                 {t('csrf.sessionNote')}
               </p>
@@ -147,7 +297,7 @@ function CsrfLab() {
 
       {isLoggedIn && (
         <>
-          <div className="csrf-demo-section">
+          <div className="csrf-demo-section" ref={demoSectionRef}>
             <h2>{t('csrf.attackSimulation')}</h2>
             
             <div className="demo-cards">
@@ -196,7 +346,7 @@ function CsrfLab() {
             </div>
           </div>
 
-          <div className="action-result">
+          <div className="action-result" ref={resultSectionRef}>
             <h2>{t('csrf.lastActionResult')}</h2>
             <div className={`result-box ${lastAction}`}>
               {lastAction === 'success' && (

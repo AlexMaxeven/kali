@@ -254,6 +254,10 @@
   border-left: 4px solid #dc3545;
 }
 
+.history-item.info {
+  border-left: 4px solid #ffc107;
+}
+
 .timestamp {
   color: #999;
   font-size: 0.85rem;
